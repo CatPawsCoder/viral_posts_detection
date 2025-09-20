@@ -15,6 +15,7 @@ import streamlit as st
 from datetime import datetime, time
 from joblib import load
 import xgboost as xgb
+from pathlib import Path
 
 # ---------- Models ----------
 from sentence_transformers import SentenceTransformer
@@ -29,9 +30,38 @@ except Exception:
     _SENTIMENT_PIPE = None
 
 
+def find_model_path(path_input: str, fname: str = "fusion_xgb.joblib") -> str:
+    here = Path(__file__).resolve()
+    candidates = []
+    # 1) ENV
+    env = os.environ.get("MODEL_PATH")
+    if env:
+        candidates.append(Path(env))
+    # 2) UI-ввод
+    if path_input:
+        candidates.append(Path(path_input))
+    # 3) рядом с app.py (если структура app/models/…)
+    candidates.append(here.parent / "models" / fname)
+    # 4) на уровень выше репозитория (если структура repo/models/… а app.py в repo/app/)
+    if len(here.parents) >= 2:
+        candidates.append(here.parents[1] / "models" / fname)
+    # 5) CWD/models (на всякий случай)
+    candidates.append(Path.cwd() / "models" / fname)
+
+    for p in candidates:
+        if p.exists():
+            return str(p)
+
+    raise FileNotFoundError(
+        "Model file not found. Checked:\n" + "\n".join(str(p) for p in candidates)
+    )
+
+
 # ==========================
 # Cache
 # ==========================
+
+
 
 @st.cache_resource
 def load_xgb_model(path: str):
@@ -265,7 +295,7 @@ st.write(
 
 with st.sidebar:
     st.header("Settings")
-    model_path = st.text_input("Model path", value="../models/fusion_xgb.joblib")
+    model_path = st.text_input("Model path", value="")
     thr = st.slider("Decision threshold (τ)", 0.0, 1.0, 0.255, 0.005,
                     help="If p ≥ τ → 'Viral', else 'Not viral'.")
     st.caption(
@@ -296,7 +326,10 @@ if do_predict:
         st.stop()
 
     with st.spinner("Loading model and embedder..."):
-        model, feature_names = load_xgb_model(model_path)
+        # model, feature_names = load_xgb_model(model_path)
+        resolved_model_path = find_model_path(model_path)
+        st.caption(f"Using model: {resolved_model_path}")
+        model, feature_names = load_xgb_model(resolved_model_path)
         sbert = load_sbert()
         bst = model if isinstance(model, xgb.Booster) else getattr(model, "get_booster", lambda: None)()
         booster_feature_names = None
