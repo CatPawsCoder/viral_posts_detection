@@ -1,0 +1,9 @@
+{
+  "model": "ai-forever/sbert_large_nlu_ru",
+  "n_texts": 3708,
+  "dim": 1024,
+  "normalize": true,
+  "max_seq_length": 256,
+  "batch_size_used": 32,
+  "text_col": "text"
+}
