@@ -23,14 +23,14 @@ def add_is_viral_by_er_final(df: pd.DataFrame) -> pd.DataFrame:
 
 def main():
     # Step 1 (optional): clean raw -> social_clean.csv
-    # print("[1/3] Loading raw CSV ...")
-    # df_raw = pd.read_csv("data/raw/social_wide.csv")
-    # print(f"      rows={len(df_raw):,}, cols={df_raw.shape[1]}")
-    # print("[2/3] Cleaning text ...")
-    # df_clean = process_text_features(df_raw)
-    # IN_CLEAN_CSV.parent.mkdir(parents=True, exist_ok=True)
-    # df_clean.to_csv(IN_CLEAN_CSV, index=False, encoding="utf-8-sig")
-    # print(f"      saved -> {IN_CLEAN_CSV}")
+    print("[1/3] Loading raw CSV ...")
+    df_raw = pd.read_csv("data/raw/social_wide.csv")
+    print(f"      rows={len(df_raw):,}, cols={df_raw.shape[1]}")
+    print("[2/3] Cleaning text ...")
+    df_clean = process_text_features(df_raw)
+    IN_CLEAN_CSV.parent.mkdir(parents=True, exist_ok=True)
+    df_clean.to_csv(IN_CLEAN_CSV, index=False, encoding="utf-8-sig")
+    print(f"      saved -> {IN_CLEAN_CSV}")
 
     # Step 2: build features on top of cleaned CSV
     print("[1/3] Loading cleaned CSV ...")
@@ -43,8 +43,8 @@ def main():
     before_cols = set(df_clean.columns)
     df_final = build_dataset(
         df_clean,
-        compute_viral_label=False,         # we'll set is_viral by er_final below
-        enable_sentiment_if_missing=False  # turn on later if needed
+        compute_viral_label=False,        
+        enable_sentiment_if_missing=False  
     )
     added = sorted(list(set(df_final.columns) - before_cols))
     print(f"      done. +{len(added)} new cols: {', '.join(added[:10])}{' ...' if len(added)>10 else ''}")
